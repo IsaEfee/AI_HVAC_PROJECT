@@ -20,7 +20,20 @@ Ayrıca sistemin klimayı yönetme önceliği **Termal Konfordur (Hipotermi Koru
 - `3_model_training/`: 10.000 satırlık verinin Keras ile eğitildiği ve TFLite formatına çevrildiği Jupyter Notebook.
 - `4_digital_twin/`: Sistem sensörlerini canlı izleyip simülatördeki dünyayı manipüle edebildiğiniz Streamlit arayüzü.
 
-## 🛠 Kullanım (Dijital İkiz)
+## 🛠 Kurulum (Takım Arkadaşları İçin)
+Projeyi kendi bilgisayarlarında çalıştırmak isteyen takım arkadaşlarınız terminalde şu komutları sırasıyla çalıştırmalıdır (Bilgisayarlarında Python yüklü olmalıdır):
+
+1. Projeyi bilgisayarınıza indirin:
+   ```bash
+   git clone https://github.com/IsaEfee/AI_HVAC_PROJECT.git
+   cd AI_HVAC_PROJECT
+   ```
+2. Gerekli yapay zeka ve arayüz kütüphanelerini yükleyin:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## 🎮 Kullanım (Dijital İkiz)
 Kendi bilgisayarınızda simülasyonu başlatmak için 2 ayrı terminal açın:
 1. Terminal: `python 2_data_collection/simulator.py` (Dünyanın fizik kurallarını başlatır)
 2. Terminal: `streamlit run 4_digital_twin/dashboard.py` (Dijital ikiz panosunu açar)
