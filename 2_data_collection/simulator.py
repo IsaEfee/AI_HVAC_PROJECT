@@ -145,33 +145,33 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
                 else: # Karışık
                     aktif_kapilar = random.sample(range(8), min(8, dolu_kapi_sayisi))
                     
+                kisi_per_kapi = gercek_kisi / len(aktif_kapilar)
+                    
                 for i in aktif_kapilar:
                     # Uzaklığa Göre Enerji Sönümlemesi (Ters Kare Yasası Benzeri)
-                    # Kapı 0 (En yakın) -> %100 enerji. Kapı 7 (En uzak) -> %30 enerji.
-                    mesafe_zayiflamasi = 1.0 - (i * 0.1) 
+                    mesafe_zayiflamasi = 1.0 - (i * 0.08) # Arka sıralara doğru hafif düşüş
                     
                     # Gölgeleme (Occlusion) Etkisi
-                    # Eğer karışık oturmaysa, öndekiler arkadakilerin radar sinyalini biraz keser
                     golgeleme = 1.0
                     if oturma_duzeni == "Karışık" and i > 2:
                         golgeleme = 0.8
                         
-                    # Temel enerji kalabalıkla artar ama mesafe ve gölgelenmeyle çarpılarak sönümlenir
-                    baz_hareket = random.randint(15, 50) + int(gercek_kisi * 1.5)
-                    baz_statik = random.randint(30, 80) + int(gercek_kisi * 1.5)
+                    # Temel enerji o kapıdaki KİŞİ SAYISINA göre net bir şekilde artar
+                    # LD2410C 1 kişi için ~20-30, çok kişi için ~60-100 değerleri üretir.
+                    baz_hareket = 15 + (kisi_per_kapi * 12) + random.gauss(0, 3)
+                    baz_statik = 25 + (kisi_per_kapi * 18) + random.gauss(0, 4)
                     
-                    move_gates[i] = int(baz_hareket * mesafe_zayiflamasi * golgeleme)
-                    stat_gates[i] = int(baz_statik * mesafe_zayiflamasi * golgeleme)
+                    move_gates[i] = max(0, min(100, int(baz_hareket * mesafe_zayiflamasi * golgeleme)))
+                    stat_gates[i] = max(0, min(100, int(baz_statik * mesafe_zayiflamasi * golgeleme)))
 
             # --- GERÇEKÇİ SENSÖR GÜRÜLTÜLERİ (Hardware Noise) ---
-            # Gerçek sensörler asla kusursuz dümdüz değer vermez. SCD41 ve SHT31'in elektriksel gürültü payları:
             okunan_sicaklik = sicaklik + random.gauss(0, 0.05)
             okunan_nem = nem + random.gauss(0, 0.3)
             okunan_co2 = co2 + random.gauss(0, 3.0)
 
-            # Radar verilerine çok daha asimetrik ve dalgalı bir gürültü ekleyelim
-            move_gates = [max(0, min(100, int(g + random.gauss(0, 5)))) for g in move_gates]
-            stat_gates = [max(0, min(100, int(g + random.gauss(0, 8)))) for g in stat_gates]
+            # Radar verilerine ek son okuma gürültüsü
+            move_gates = [max(0, min(100, int(g + random.gauss(0, 2)))) if g > 0 else 0 for g in move_gates]
+            stat_gates = [max(0, min(100, int(g + random.gauss(0, 3)))) if g > 0 else 0 for g in stat_gates]
 
             # --- 5. CSV'YE YAZMA ---
             su_an = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

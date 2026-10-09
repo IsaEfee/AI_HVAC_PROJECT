@@ -92,24 +92,25 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
             if oturma_duzeni == "Ön Sıralar": aktif_kapilar = list(range(0, min(8, dolu_kapi_sayisi)))
             elif oturma_duzeni == "Arka Sıralar": aktif_kapilar = list(range(max(0, 8 - dolu_kapi_sayisi), 8))
             else: aktif_kapilar = random.sample(range(8), min(8, dolu_kapi_sayisi))
+            kisi_per_kapi = gercek_kisi / len(aktif_kapilar)
             for i in aktif_kapilar:
-                mesafe_zayiflamasi = 1.0 - (i * 0.1) 
+                mesafe_zayiflamasi = 1.0 - (i * 0.08) 
                 golgeleme = 1.0
                 if oturma_duzeni == "Karışık" and i > 2:
                     golgeleme = 0.8
                 
-                baz_hareket = random.randint(15, 50) + int(gercek_kisi * 1.5)
-                baz_statik = random.randint(30, 80) + int(gercek_kisi * 1.5)
+                baz_hareket = 15 + (kisi_per_kapi * 12) + random.gauss(0, 3)
+                baz_statik = 25 + (kisi_per_kapi * 18) + random.gauss(0, 4)
                 
-                move_gates[i] = int(baz_hareket * mesafe_zayiflamasi * golgeleme)
-                stat_gates[i] = int(baz_statik * mesafe_zayiflamasi * golgeleme)
+                move_gates[i] = max(0, min(100, int(baz_hareket * mesafe_zayiflamasi * golgeleme)))
+                stat_gates[i] = max(0, min(100, int(baz_statik * mesafe_zayiflamasi * golgeleme)))
 
         # SENSÖR GÜRÜLTÜLERİ
         okunan_sicaklik = sicaklik + random.gauss(0, 0.05)
         okunan_nem = nem + random.gauss(0, 0.3)
         okunan_co2 = co2 + random.gauss(0, 3.0)
-        move_gates = [max(0, min(100, int(g + random.gauss(0, 5)))) for g in move_gates]
-        stat_gates = [max(0, min(100, int(g + random.gauss(0, 8)))) for g in stat_gates]
+        move_gates = [max(0, min(100, int(g + random.gauss(0, 2)))) if g > 0 else 0 for g in move_gates]
+        stat_gates = [max(0, min(100, int(g + random.gauss(0, 3)))) if g > 0 else 0 for g in stat_gates]
 
         zaman += timedelta(seconds=1)
         satir = [zaman.strftime("%Y-%m-%d %H:%M:%S")] + move_gates + stat_gates + [
