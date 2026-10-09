@@ -14,7 +14,7 @@ add_code("""import pandas as pd\nimport numpy as np\nimport tensorflow as tf\nfr
 
 add_md("""## 1. Veri Setinin Yüklenmesi ve Hazırlanması\nRadar, CO2, Sıcaklık verilerini alacağız.""")
 
-add_code("""df = pd.read_csv("../2_Veri_Toplama/dataset.csv")\n\nradar_cols = [col for col in df.columns if "Move" in col or "Stat" in col]\nX = df[radar_cols + ["CO2_Egimi", "Sicaklik", "Nem"]].values\n\ny_kisi = df["Gercek_Kisi_Sayisi"].values\ny_klima = df["Hedef_Klima_Gucu"].values\n\nscaler = MinMaxScaler()\nX_scaled = scaler.fit_transform(X)\n\n# Scaler değerlerini kaydet (Arayüzde gerçek tahmin için)\nwith open('scaler.json', 'w') as f:\n    json.dump({"min": scaler.data_min_.tolist(), "scale": scaler.scale_.tolist()}, f)\n\nX_train, X_test, y_kisi_train, y_kisi_test, y_klima_train, y_klima_test = train_test_split(\n    X_scaled, y_kisi, y_klima, test_size=0.2, random_state=42\n)\n\nprint(f"Eğitim verisi: {X_train.shape[0]} satır. Test verisi: {X_test.shape[0]} satır.")""")
+add_code("""df = pd.read_csv("../2_data_collection/dataset.csv")\n\nradar_cols = [col for col in df.columns if "Move" in col or "Stat" in col]\nX = df[radar_cols + ["CO2_Egimi", "Sicaklik", "Nem"]].values\n\ny_kisi = df["Gercek_Kisi_Sayisi"].values\ny_klima = df["Hedef_Klima_Gucu"].values\n\nscaler = MinMaxScaler()\nX_scaled = scaler.fit_transform(X)\n\n# Scaler değerlerini kaydet (Arayüzde gerçek tahmin için)\nwith open('scaler.json', 'w') as f:\n    json.dump({"min": scaler.data_min_.tolist(), "scale": scaler.scale_.tolist()}, f)\n\nX_train, X_test, y_kisi_train, y_kisi_test, y_klima_train, y_klima_test = train_test_split(\n    X_scaled, y_kisi, y_klima, test_size=0.2, random_state=42\n)\n\nprint(f"Eğitim verisi: {X_train.shape[0]} satır. Test verisi: {X_test.shape[0]} satır.")""")
 
 add_md("""## 2. İki Aşamalı Yapay Zeka Mimarisinin Kurulması""")
 
@@ -26,7 +26,7 @@ add_code("""history = model.fit(\n    X_train, \n    {'kisi_tahmini': y_kisi_tra
 
 add_md("""## 4. Eğitimi İnceleme ve TFLite Dönüşümü""")
 
-add_code("""plt.plot(history.history['klima_karari_accuracy'], label='Eğitim Başarısı')\nplt.plot(history.history['val_klima_karari_accuracy'], label='Doğrulama Başarısı')\nplt.title('Klima Kararı AI Ajanı Başarısı')\nplt.legend()\nplt.show()\n\n# Hem Keras hem TFLite olarak kaydet (Keras'ı Streamlit kullanacak)\nmodel.save('ai_ajani.keras')\n\nconverter = tf.lite.TFLiteConverter.from_keras_model(model)\ntflite_model = converter.convert()\n\nwith open('ai_ajani.tflite', 'wb') as f:\n    f.write(tflite_model)\n    \nprint("Modeller kaydedildi!")""")
+add_code("""plt.plot(history.history['klima_karari_accuracy'], label='Eğitim Başarısı')\nplt.plot(history.history['val_klima_karari_accuracy'], label='Doğrulama Başarısı')\nplt.title('Klima Kararı AI Ajanı Başarısı')\nplt.legend()\nplt.show()\n\n# Hem Keras hem TFLite olarak kaydet (Keras'ı Streamlit kullanacak)\nmodel.save('ai_agent.keras')\n\nconverter = tf.lite.TFLiteConverter.from_keras_model(model)\ntflite_model = converter.convert()\n\nwith open('ai_agent.tflite', 'wb') as f:\n    f.write(tflite_model)\n    \nprint("Modeller kaydedildi!")""")
 
 notebook = {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}, "language_info": {"name": "python", "version": "3.9"}}, "nbformat": 4, "nbformat_minor": 5}
 

@@ -15,12 +15,12 @@ Eğer cam açılırsa CO2 seviyesi hızla düşer, basit sistemler odanın boşa
 Ayrıca sistemin klimayı yönetme önceliği **Termal Konfordur (Hipotermi Koruması)**. İçerisi havasız (yüksek CO2) olsa dahi oda soğuduysa klimayı zorlamaz, sadece **Kırmızı Işıklı Alarm** vererek insanlardan camları açmasını ister (Çünkü standart klimalar taze hava üretemez).
 
 ## 📂 Klasör Yapısı
-- `1_ESP32_Donanim/`: C++ ile yazılmış ESP32-S3 sensör okuma ve Edge AI (TFLite Micro) çalıştırma kodları.
-- `2_Veri_Toplama/`: Fiziksel termodinamik kurallarıyla çalışan Python tabanlı "Simülatör".
-- `3_Model_Egitimi/`: 10.000 satırlık verinin Keras ile eğitildiği ve TFLite formatına çevrildiği Jupyter Notebook.
-- `4_Dijital_Ikiz/`: Sistem sensörlerini canlı izleyip simülatördeki dünyayı manipüle edebildiğiniz Streamlit arayüzü.
+- `1_hardware/`: C++ ile yazılmış ESP32-S3 sensör okuma ve Edge AI (TFLite Micro) çalıştırma kodları.
+- `2_data_collection/`: Fiziksel termodinamik kurallarıyla çalışan Python tabanlı "Simülatör".
+- `3_model_training/`: 10.000 satırlık verinin Keras ile eğitildiği ve TFLite formatına çevrildiği Jupyter Notebook.
+- `4_digital_twin/`: Sistem sensörlerini canlı izleyip simülatördeki dünyayı manipüle edebildiğiniz Streamlit arayüzü.
 
 ## 🛠 Kullanım (Dijital İkiz)
 Kendi bilgisayarınızda simülasyonu başlatmak için 2 ayrı terminal açın:
-1. Terminal: `python 2_Veri_Toplama/simulator.py` (Dünyanın fizik kurallarını başlatır)
-2. Terminal: `streamlit run 4_Dijital_Ikiz/arayuz.py` (Dijital ikiz panosunu açar)
+1. Terminal: `python 2_data_collection/simulator.py` (Dünyanın fizik kurallarını başlatır)
+2. Terminal: `streamlit run 4_digital_twin/dashboard.py` (Dijital ikiz panosunu açar)

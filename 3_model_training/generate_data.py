@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta
 import os
 
-DOSYA_ADI = os.path.join(os.path.dirname(__file__), '..', '2_Veri_Toplama', 'dataset.csv')
+DOSYA_ADI = os.path.join(os.path.dirname(__file__), '..', '2_data_collection', 'dataset.csv')
 
 IDEAL_SICAKLIK_MIN = 22.5
 IDEAL_SICAKLIK_MAX = 24.0

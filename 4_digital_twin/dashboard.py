@@ -8,7 +8,7 @@ st.set_page_config(page_title="Akıllı Sınıf Dijital İkiz", layout="wide")
 st.title("🎓 Akıllı Sınıf & Otonom HVAC - Canlı Dijital İkiz Panosu")
 
 # Veri dosyasının yolu
-DATA_PATH = os.path.join(os.path.dirname(__file__), '..', '2_Veri_Toplama', 'dataset.csv')
+DATA_PATH = os.path.join(os.path.dirname(__file__), '..', '2_data_collection', 'dataset.csv')
 
 # Sol menüye canlı yenileme butonu ekleme
 canli_yayin = st.sidebar.toggle("🔴 Canlı Veri Akışını Başlat", value=True)
@@ -19,7 +19,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### 🎮 Simülatör Kontrolü")
 st.sidebar.caption("Oda koşullarını canlı olarak değiştirin.")
 
-ayarlar_dosyasi = os.path.join(os.path.dirname(__file__), '..', '2_Veri_Toplama', 'sim_ayarlar.json')
+ayarlar_dosyasi = os.path.join(os.path.dirname(__file__), '..', '2_data_collection', 'sim_settings.json')
 
 # Session state'te ayarları tutalım (Sadece ilk çalışmada veya dosya güncellendiğinde okumak için)
 if 'mevcut_ayarlar' not in st.session_state:
@@ -129,8 +129,8 @@ if df is not None and not df.empty:
     import numpy as np
     
     # Keras ve Scaler dosya yolları (Jupyter Notebook'un ürettiği dosyalar)
-    model_path = os.path.join(os.path.dirname(__file__), '..', '3_Model_Egitimi', 'ai_ajani.keras')
-    scaler_path = os.path.join(os.path.dirname(__file__), '..', '3_Model_Egitimi', 'scaler.json')
+    model_path = os.path.join(os.path.dirname(__file__), '..', '3_model_training', 'ai_agent.keras')
+    scaler_path = os.path.join(os.path.dirname(__file__), '..', '3_model_training', 'scaler.json')
     
     try:
         if os.path.exists(model_path) and os.path.exists(scaler_path):

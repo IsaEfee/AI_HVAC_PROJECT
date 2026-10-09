@@ -18,7 +18,7 @@ ayarlar = {
     "cam_acik": False,
     "force_sicaklik": None
 }
-ayarlar_dosyasi = os.path.join(os.path.dirname(__file__), 'sim_ayarlar.json')
+ayarlar_dosyasi = os.path.join(os.path.dirname(__file__), 'sim_settings.json')
 
 gercek_kisi = 0
 co2 = 450.0

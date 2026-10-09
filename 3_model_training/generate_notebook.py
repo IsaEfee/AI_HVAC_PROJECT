@@ -29,7 +29,7 @@ Hedeflerimiz:
 """
 
 code2 = """\
-df = pd.read_csv("../2_Veri_Toplama/dataset.csv")
+df = pd.read_csv("../2_data_collection/dataset.csv")
 
 # Girdiler (Features)
 radar_cols = [col for col in df.columns if "Move" in col or "Stat" in col]
@@ -123,10 +123,10 @@ plt.show()
 converter = tf.lite.TFLiteConverter.from_keras_model(model)
 tflite_model = converter.convert()
 
-with open('ai_ajani.tflite', 'wb') as f:
+with open('ai_agent.tflite', 'wb') as f:
     f.write(tflite_model)
     
-print("Model başarıyla ai_ajani.tflite olarak kaydedildi! Artık ESP32'ye yüklenebilir.")
+print("Model başarıyla ai_agent.tflite olarak kaydedildi! Artık ESP32'ye yüklenebilir.")
 """
 
 nb['cells'] = [
