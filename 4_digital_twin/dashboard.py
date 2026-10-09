@@ -62,7 +62,7 @@ ayarlar["oturma_duzeni"] = st.sidebar.selectbox(
 # 3. Çevre Şartları
 st.sidebar.markdown("### 🌤️ Çevre Şartları")
 ayarlar["dis_sicaklik"] = st.sidebar.slider("Dışarıdaki Hava Sıcaklığı (°C)", -10.0, 45.0, ayarlar["dis_sicaklik"], 0.5)
-ayarlar["cam_acik"] = st.sidebar.toggle("🪟 Camlar Açık", value=ayarlar["cam_acik"])
+ayarlar["cam_acik"] = st.sidebar.toggle("🪟 Camlar Açık", value=ayarlar["cam_acik"], key="cam_toggle")
 
 # 4. Anlık Sıcaklık Müdahalesi
 st.sidebar.markdown("### 🌡️ Anlık Müdahale")

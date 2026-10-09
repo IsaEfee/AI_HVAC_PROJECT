@@ -146,8 +146,22 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
                     aktif_kapilar = random.sample(range(8), min(8, dolu_kapi_sayisi))
                     
                 for i in aktif_kapilar:
-                    move_gates[i] = random.randint(15, 50) + int(gercek_kisi * 1.5)
-                    stat_gates[i] = random.randint(30, 80) + int(gercek_kisi * 1.5)
+                    # Uzaklığa Göre Enerji Sönümlemesi (Ters Kare Yasası Benzeri)
+                    # Kapı 0 (En yakın) -> %100 enerji. Kapı 7 (En uzak) -> %30 enerji.
+                    mesafe_zayiflamasi = 1.0 - (i * 0.1) 
+                    
+                    # Gölgeleme (Occlusion) Etkisi
+                    # Eğer karışık oturmaysa, öndekiler arkadakilerin radar sinyalini biraz keser
+                    golgeleme = 1.0
+                    if oturma_duzeni == "Karışık" and i > 2:
+                        golgeleme = 0.8
+                        
+                    # Temel enerji kalabalıkla artar ama mesafe ve gölgelenmeyle çarpılarak sönümlenir
+                    baz_hareket = random.randint(15, 50) + int(gercek_kisi * 1.5)
+                    baz_statik = random.randint(30, 80) + int(gercek_kisi * 1.5)
+                    
+                    move_gates[i] = int(baz_hareket * mesafe_zayiflamasi * golgeleme)
+                    stat_gates[i] = int(baz_statik * mesafe_zayiflamasi * golgeleme)
 
             # --- GERÇEKÇİ SENSÖR GÜRÜLTÜLERİ (Hardware Noise) ---
             # Gerçek sensörler asla kusursuz dümdüz değer vermez. SCD41 ve SHT31'in elektriksel gürültü payları:

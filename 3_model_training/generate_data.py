@@ -93,8 +93,16 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
             elif oturma_duzeni == "Arka Sıralar": aktif_kapilar = list(range(max(0, 8 - dolu_kapi_sayisi), 8))
             else: aktif_kapilar = random.sample(range(8), min(8, dolu_kapi_sayisi))
             for i in aktif_kapilar:
-                move_gates[i] = random.randint(15, 50) + int(gercek_kisi * 1.5)
-                stat_gates[i] = random.randint(30, 80) + int(gercek_kisi * 1.5)
+                mesafe_zayiflamasi = 1.0 - (i * 0.1) 
+                golgeleme = 1.0
+                if oturma_duzeni == "Karışık" and i > 2:
+                    golgeleme = 0.8
+                
+                baz_hareket = random.randint(15, 50) + int(gercek_kisi * 1.5)
+                baz_statik = random.randint(30, 80) + int(gercek_kisi * 1.5)
+                
+                move_gates[i] = int(baz_hareket * mesafe_zayiflamasi * golgeleme)
+                stat_gates[i] = int(baz_statik * mesafe_zayiflamasi * golgeleme)
 
         # SENSÖR GÜRÜLTÜLERİ
         okunan_sicaklik = sicaklik + random.gauss(0, 0.05)
