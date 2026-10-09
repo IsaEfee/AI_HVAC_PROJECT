@@ -1,0 +1,182 @@
+import time
+import csv
+import random
+from datetime import datetime
+import json
+import os
+
+DOSYA_ADI = "dataset.csv"
+
+# --- FİZİKSEL VE TERMODİNAMİK PARAMETRELER ---
+IDEAL_SICAKLIK_MIN = 22.5
+IDEAL_SICAKLIK_MAX = 24.0
+
+ayarlar = {
+    "hedef_kisi": 0,
+    "oturma_duzeni": "Karışık",
+    "dis_sicaklik": 28.0,
+    "cam_acik": False,
+    "force_sicaklik": None
+}
+ayarlar_dosyasi = os.path.join(os.path.dirname(__file__), 'sim_ayarlar.json')
+
+gercek_kisi = 0
+co2 = 450.0
+sicaklik = 23.0
+nem = 40.0
+aktif_klima_gucu = 0
+son_klima_degisim_zamani = 0
+co2_egimi = 0.0
+
+header = ["Zaman"]
+header += [f"Move_G{i}" for i in range(8)]
+header += [f"Stat_G{i}" for i in range(8)]
+header += ["Sicaklik", "Nem", "CO2", "CO2_Egimi", "Gercek_Kisi_Sayisi", "Hedef_Klima_Gucu", "Aktif_Klima"]
+
+print("Gelişmiş Termodinamik Sınıf Simülatörü Başladı!")
+print("dataset.csv dosyasına saniyede 1 veri yazılıyor. Ctrl+C ile durdurabilirsiniz.\n")
+
+with open(DOSYA_ADI, mode='w', newline='') as dosya:
+    yazici = csv.writer(dosya)
+    yazici.writerow(header)
+
+    dongu_sayaci = 0
+    co2_gecmisi = [co2] * 10
+
+    while True:
+        try:
+            # --- 1. MANUEL AYARLARI OKU ---
+            try:
+                if os.path.exists(ayarlar_dosyasi):
+                    with open(ayarlar_dosyasi, "r") as f:
+                        okunan = json.load(f)
+                        ayarlar.update(okunan)
+            except Exception:
+                pass
+            
+            hedef_kisi = ayarlar["hedef_kisi"]
+            dis_sicaklik = ayarlar["dis_sicaklik"]
+            cam_acik = ayarlar["cam_acik"]
+            oturma_duzeni = ayarlar["oturma_duzeni"]
+
+            # Anlık sıcaklık müdahalesi varsa uygula
+            if ayarlar["force_sicaklik"] is not None:
+                sicaklik = float(ayarlar["force_sicaklik"])
+                ayarlar["force_sicaklik"] = None
+                with open(ayarlar_dosyasi, "w") as f:
+                    json.dump(ayarlar, f)
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] DIŞ MÜDAHALE: Sıcaklık {sicaklik}°C'ye ayarlandı.")
+
+            # Kişi Dinamikleri (Giriş/Çıkış)
+            if dongu_sayaci % 3 == 0:
+                if gercek_kisi < hedef_kisi:
+                    gercek_kisi += 1
+                elif gercek_kisi > hedef_kisi:
+                    gercek_kisi -= 1
+
+            # --- 2. KLİMA KARAR MEKANİZMASI (Sadece Isı Kontrolü) ---
+            teorik_hedef = 0
+            if gercek_kisi > 0:
+                hissedilen_sicaklik = sicaklik + max(0, (nem - 40) * 0.05)
+                
+                # SADECE RADAR (Kişi Sayısı) ve ISIYA GÖRE KLİMA GÜCÜ
+                # Sıcaklık baremlerini genişleterek 1'den 3'e aniden atlamasını (ping-pong) engelliyoruz.
+                if hissedilen_sicaklik > IDEAL_SICAKLIK_MAX + 1.5 or (hissedilen_sicaklik > IDEAL_SICAKLIK_MAX + 0.5 and gercek_kisi > 20):
+                    teorik_hedef = 3 # Çok sıcak (örn: 25.5 üstü)
+                elif hissedilen_sicaklik > IDEAL_SICAKLIK_MAX or (hissedilen_sicaklik > IDEAL_SICAKLIK_MIN + 0.5 and gercek_kisi > 8):
+                    teorik_hedef = 2 # Orta sıcaklık (örn: 24.0 üstü veya 23.0 + kalabalık)
+                elif hissedilen_sicaklik > IDEAL_SICAKLIK_MIN:
+                    teorik_hedef = 1 # İdeal sınır (22.5 üstü)
+                else:
+                    teorik_hedef = 0
+                    
+                # HİPOTERMİ KORUMASI
+                if sicaklik < 22.0 and teorik_hedef > 1:
+                    teorik_hedef = 1
+                if sicaklik < 20.5:
+                    teorik_hedef = 0
+
+            if aktif_klima_gucu != teorik_hedef and (dongu_sayaci - son_klima_degisim_zamani) > 60:
+                aktif_klima_gucu = teorik_hedef
+                son_klima_degisim_zamani = dongu_sayaci
+
+            # --- 3. TERMODİNAMİK SİMÜLASYONU ---
+            yaltim_carpani = 0.001 if cam_acik else 0.0002
+            isi_sizintisi = (dis_sicaklik - sicaklik) * yaltim_carpani
+            insan_isisi = gercek_kisi * 0.0005 
+            
+            klima_sogutmasi = 0
+            if aktif_klima_gucu == 1: klima_sogutmasi = 0.005 
+            elif aktif_klima_gucu == 2: klima_sogutmasi = 0.015 
+            elif aktif_klima_gucu == 3: klima_sogutmasi = 0.030 
+            
+            if cam_acik: klima_sogutmasi *= 0.5 
+            
+            sicaklik += isi_sizintisi + insan_isisi - klima_sogutmasi
+
+            # CO2 Değişimi (Klima artık CO2'ye etki etmiyor! Sadece cam açılırsa düşer)
+            co2_uretimi = gercek_kisi * 0.4
+            dogal_sizinti = (co2 - 400.0) * (0.02 if cam_acik else 0.0005) 
+            
+            co2 += co2_uretimi - dogal_sizinti
+            co2 = max(400.0, co2)
+
+            co2_gecmisi.pop(0)
+            co2_gecmisi.append(co2)
+            co2_egimi = co2_gecmisi[-1] - co2_gecmisi[0]
+
+            nem += (gercek_kisi * 0.01) - (aktif_klima_gucu * 0.05)
+            # Cam açıksa dışarıdaki neme (varsayılan 45) meyleder
+            if cam_acik: nem += (45.0 - nem) * 0.01
+            nem = max(30.0, min(70.0, nem))
+
+            # --- 4. RADAR VERİSİ VE OTURMA DÜZENİ ---
+            move_gates = [0] * 8
+            stat_gates = [0] * 8
+            if gercek_kisi > 0:
+                aktif_kapilar = []
+                # 30 kişi kapasiteli sınıf
+                dolu_kapi_sayisi = max(1, int((gercek_kisi / 30.0) * 8) + 1)
+                
+                if oturma_duzeni == "Ön Sıralar":
+                    aktif_kapilar = list(range(0, min(8, dolu_kapi_sayisi)))
+                elif oturma_duzeni == "Arka Sıralar":
+                    aktif_kapilar = list(range(max(0, 8 - dolu_kapi_sayisi), 8))
+                else: # Karışık
+                    aktif_kapilar = random.sample(range(8), min(8, dolu_kapi_sayisi))
+                    
+                for i in aktif_kapilar:
+                    move_gates[i] = random.randint(15, 50) + int(gercek_kisi * 1.5)
+                    stat_gates[i] = random.randint(30, 80) + int(gercek_kisi * 1.5)
+
+            # --- GERÇEKÇİ SENSÖR GÜRÜLTÜLERİ (Hardware Noise) ---
+            # Gerçek sensörler asla kusursuz dümdüz değer vermez. SCD41 ve SHT31'in elektriksel gürültü payları:
+            okunan_sicaklik = sicaklik + random.gauss(0, 0.05)
+            okunan_nem = nem + random.gauss(0, 0.3)
+            okunan_co2 = co2 + random.gauss(0, 3.0)
+
+            # Radar verilerine çok daha asimetrik ve dalgalı bir gürültü ekleyelim
+            move_gates = [max(0, min(100, int(g + random.gauss(0, 5)))) for g in move_gates]
+            stat_gates = [max(0, min(100, int(g + random.gauss(0, 8)))) for g in stat_gates]
+
+            # --- 5. CSV'YE YAZMA ---
+            su_an = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            satir = [su_an] + move_gates + stat_gates + [
+                round(okunan_sicaklik, 3), 
+                round(okunan_nem, 2), 
+                int(okunan_co2), 
+                round(co2_egimi, 2), 
+                gercek_kisi,
+                teorik_hedef, 
+                aktif_klima_gucu 
+            ]
+            
+            yazici.writerow(satir)
+            dosya.flush()
+
+            dongu_sayaci += 1
+            time.sleep(1)
+
+        except KeyboardInterrupt:
+            print("\nSimülatör durduruldu.")
+            break
