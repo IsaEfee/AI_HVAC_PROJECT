@@ -189,11 +189,27 @@ if df is not None and not df.empty:
     with col2:
         st.metric("CO2 Seviyesi", f"{int(anlik_durum['CO2'])} ppm", f"{anlik_durum['CO2_Egimi']:.1f} ppm/dk")
     with col3:
-        # İdeal aralık 22.5 - 24.0. Bunu görsel olarak belli edelim.
+        # İdeal aralık 22.5 - 24.0
         sicaklik_val = anlik_durum['Sicaklik']
-        st.metric("Sıcaklık", f"{sicaklik_val} °C", 
-                  "İdeal" if 22.5 <= sicaklik_val <= 24.0 else ("Sıcak" if sicaklik_val > 24.0 else "Soğuk"),
-                  delta_color="off")
+        durum_metni = "İdeal" if 22.5 <= sicaklik_val <= 24.0 else ("Sıcak" if sicaklik_val > 24.0 else "Soğuk")
+        
+        # Son 60 saniyelik (1 dakika) termal eğim / değişim hızını hesapla
+        gecmis_adim = min(60, len(df))
+        if gecmis_adim > 1:
+            sicaklik_farki = df['Sicaklik'].iloc[-1] - df['Sicaklik'].iloc[-gecmis_adim]
+            dakika_carpani = 60.0 / gecmis_adim
+            hiz = sicaklik_farki * dakika_carpani
+            
+            if hiz > 0.04:
+                delta_str = f"+{hiz:.2f} °C/dk (Isınıyor 🔥)"
+            elif hiz < -0.04:
+                delta_str = f"{hiz:.2f} °C/dk (Soğuyor ❄️)"
+            else:
+                delta_str = "0.00 °C/dk (Dengede ⚖️)"
+        else:
+            delta_str = "Hesaplanıyor..."
+            
+        st.metric(f"Sıcaklık ({durum_metni})", f"{sicaklik_val:.1f} °C", delta=delta_str, delta_color="off")
     with col4:
         st.metric("Nem", f"% {anlik_durum['Nem']}")
 
