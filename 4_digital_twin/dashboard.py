@@ -211,7 +211,9 @@ if df is not None and not df.empty:
                 kisi_matrisi = live_data["matrix"]
                 gorsel_enerjiler = live_data["energies"]
                 
-            html_str = "<div style='display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; margin: auto;'>"
+            html_str = "<div style='max-width: 500px; margin: auto;'>"
+            html_str += "<div style='background-color: #2e7d32; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 12px;'>📡 RADAR & TAHTA (ÖN TARAF) 🧑‍🏫</div>"
+            html_str += "<div style='display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;'>"
             for r in range(8):
                 for c in range(4):
                     if kisi_matrisi[r][c] == 1:
@@ -222,6 +224,8 @@ if df is not None and not df.empty:
                         html_str += f"<div style='background-color: {bg_color}; padding: 15px; text-align: center; border-radius: 8px; font-weight: bold; color: white;'>👤 {enerji}</div>"
                     else:
                         html_str += f"<div style='background-color: #f0f2f6; padding: 15px; text-align: center; border-radius: 8px; color: #b0b4b8;'>🪑 0</div>"
+            html_str += "</div>"
+            html_str += "<div style='background-color: #555; color: white; text-align: center; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 12px;'>🚪 ARKA SIRA & KAPI (EN UZAK)</div>"
             html_str += "</div><br>"
             st.markdown(html_str, unsafe_allow_html=True)
     except Exception as e:
