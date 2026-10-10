@@ -200,12 +200,15 @@ if df is not None and not df.empty:
             dakika_carpani = 60.0 / gecmis_adim
             hiz = sicaklik_farki * dakika_carpani
             
-            if hiz > 0.04:
+            # Gerçekçi Termodinamik Eşik (Deadband):
+            # 0.12 °C/dk altındaki mikro oynamalar sensör gürültüsü veya oda dengesidir.
+            if hiz >= 0.12:
                 delta_str = f"+{hiz:.2f} °C/dk (Isınıyor 🔥)"
-            elif hiz < -0.04:
+            elif hiz <= -0.12:
                 delta_str = f"{hiz:.2f} °C/dk (Soğuyor ❄️)"
             else:
-                delta_str = "0.00 °C/dk (Dengede ⚖️)"
+                sign = "+" if hiz > 0 else ""
+                delta_str = f"{sign}{hiz:.2f} °C/dk (Dengede ⚖️)"
         else:
             delta_str = "Hesaplanıyor..."
             
