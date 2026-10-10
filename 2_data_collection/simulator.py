@@ -44,7 +44,7 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
     co2_gecmisi = [co2] * 10
     
     # Oturma düzeni için durum (state) değişkenleri
-    kisi_dagilimi = [0] * 8
+    kisi_matrisi = [[0]*4 for _ in range(8)]
     son_oturma_duzeni = ""
 
     while True:
@@ -136,59 +136,79 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
 
             # Oturma Düzeni Değiştiyse Sınıfı Yeniden Yerleştir
             if oturma_duzeni != son_oturma_duzeni:
-                kisi_dagilimi = [0] * 8
+                kisi_matrisi = [[0]*4 for _ in range(8)]
                 mevcut_kisi = 0
                 son_oturma_duzeni = oturma_duzeni
             else:
-                mevcut_kisi = sum(kisi_dagilimi)
+                mevcut_kisi = sum(sum(row) for row in kisi_matrisi)
 
             # Sınıfa Biri Girdiğinde (Eklerken)
             while mevcut_kisi < gercek_kisi:
-                musait_kapilar = [i for i in range(8) if kisi_dagilimi[i] < 4] # Max 4 kişi/kapı
-                if not musait_kapilar: break
+                bos_koltuklar = [(r, c) for r in range(8) for c in range(4) if kisi_matrisi[r][c] == 0]
+                if not bos_koltuklar: break
                 
-                if oturma_duzeni == "Ön Sıralar": secilen = musait_kapilar[0]
-                elif oturma_duzeni == "Arka Sıralar": secilen = musait_kapilar[-1]
-                else: secilen = random.choice(musait_kapilar)
+                if oturma_duzeni == "Ön Sıralar": 
+                    secilen = min(bos_koltuklar, key=lambda x: x[0])
+                elif oturma_duzeni == "Arka Sıralar": 
+                    secilen = max(bos_koltuklar, key=lambda x: x[0])
+                else: 
+                    secilen = random.choice(bos_koltuklar)
                 
-                kisi_dagilimi[secilen] += 1
+                kisi_matrisi[secilen[0]][secilen[1]] = 1
                 mevcut_kisi += 1
 
             # Sınıftan Biri Çıktığında (Silerken)
             while mevcut_kisi > gercek_kisi:
-                dolu_kapilar = [i for i in range(8) if kisi_dagilimi[i] > 0]
-                if not dolu_kapilar: break
+                dolu_koltuklar = [(r, c) for r in range(8) for c in range(4) if kisi_matrisi[r][c] == 1]
+                if not dolu_koltuklar: break
                 
-                if oturma_duzeni == "Ön Sıralar": secilen = dolu_kapilar[-1] # En arkadakini çıkar
-                elif oturma_duzeni == "Arka Sıralar": secilen = dolu_kapilar[0] # En öndekini çıkar
-                else: secilen = random.choice(dolu_kapilar)
+                if oturma_duzeni == "Ön Sıralar": 
+                    secilen = max(dolu_koltuklar, key=lambda x: x[0]) # En arkadakini çıkar
+                elif oturma_duzeni == "Arka Sıralar": 
+                    secilen = min(dolu_koltuklar, key=lambda x: x[0]) # En öndekini çıkar
+                else: 
+                    secilen = random.choice(dolu_koltuklar)
                     
-                kisi_dagilimi[secilen] -= 1
+                kisi_matrisi[secilen[0]][secilen[1]] = 0
                 mevcut_kisi -= 1
 
-            # --- 4. RADAR VERİSİ (STATEFUL) ---
+            # --- 4. RADAR VERİSİ (GERÇEKÇİ 2D FİZİK) ---
             move_gates = [0] * 8
             stat_gates = [0] * 8
             
-            for i in range(8):
-                if kisi_dagilimi[i] > 0:
-                    kisi_sayisi = kisi_dagilimi[i]
-                    # Uzaklığa Göre Enerji Sönümlemesi (Ters Kare Yasası Benzeri)
-                    mesafe_zayiflamasi = 1.0 - (i * 0.08) # Arka sıralara doğru hafif düşüş
-                    
-                    # DİNAMİK GÖLGELEME (Occlusion) Etkisi
-                    # Bu kapının 'önündeki' tüm kapılardaki toplam kişi sayısını bul
-                    onumdeki_kisi_sayisi = sum(kisi_dagilimi[:i]) if i > 0 else 0
-                    # Öndeki her 1 kişi, radar sinyalini %4 (0.04) keser (Maksimum %70 kesilebilir)
-                    golgeleme = max(0.3, 1.0 - (onumdeki_kisi_sayisi * 0.04))
+            gorsel_enerjiler = [[0]*4 for _ in range(8)]
+            
+            for r in range(8):
+                hareket_toplam = 0
+                statik_toplam = 0
+                for c in range(4):
+                    if kisi_matrisi[r][c] == 1:
+                        # Uzaklığa Göre Enerji Sönümlemesi
+                        mesafe_zayiflamasi = 1.0 - (r * 0.08)
                         
-                    # Temel enerji o kapıdaki KİŞİ SAYISINA göre net bir şekilde artar
-                    # LD2410C 1 kişi için ~20-30, çok kişi için ~60-100 değerleri üretir.
-                    baz_hareket = 15 + (kisi_sayisi * 12) + random.gauss(0, 3)
-                    baz_statik = 25 + (kisi_sayisi * 18) + random.gauss(0, 4)
-                    
-                    move_gates[i] = max(0, min(100, int(baz_hareket * mesafe_zayiflamasi * golgeleme)))
-                    stat_gates[i] = max(0, min(100, int(baz_statik * mesafe_zayiflamasi * golgeleme)))
+                        # GERÇEKÇİ DİNAMİK GÖLGELEME (Line-of-Sight)
+                        # Bu kişinin tam önündeki aynı sütunda oturan kişi sayısı
+                        onumdeki_kisi = sum(kisi_matrisi[row][c] for row in range(r))
+                        golgeleme = max(0.3, 1.0 - (onumdeki_kisi * 0.15)) # Herkes %15 engeller
+                        
+                        # Bireysel Biyolojik Gürültü
+                        kisi_hareket = 12 + random.gauss(0, 3)
+                        kisi_statik = 18 + random.gauss(0, 4)
+                        
+                        yansiyan_hareket = kisi_hareket * mesafe_zayiflamasi * golgeleme
+                        yansiyan_statik = kisi_statik * mesafe_zayiflamasi * golgeleme
+                        
+                        hareket_toplam += yansiyan_hareket
+                        statik_toplam += yansiyan_statik
+                        
+                        gorsel_enerjiler[r][c] = round(yansiyan_statik)
+                        
+                move_gates[r] = max(0, min(100, int(hareket_toplam)))
+                stat_gates[r] = max(0, min(100, int(statik_toplam)))
+
+            # Arayüz İçin 2D Sınıf Haritasını Kaydet
+            with open("live_classroom.json", "w") as f:
+                json.dump({"matrix": kisi_matrisi, "energies": gorsel_enerjiler}, f)
 
             # --- GERÇEKÇİ SENSÖR GÜRÜLTÜLERİ (Hardware Noise) ---
             okunan_sicaklik = sicaklik + random.gauss(0, 0.05)

@@ -28,7 +28,7 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
     yazici.writerow(header)
     zaman = datetime.now() - timedelta(hours=3)
     co2_gecmisi = [co2] * 10
-    kisi_dagilimi = [0] * 8
+    kisi_matrisi = [[0]*4 for _ in range(8)]
     son_oturma_duzeni = ""
 
     for dongu_sayaci in range(10000):
@@ -88,44 +88,49 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
         nem = max(30.0, min(70.0, nem))
 
         if oturma_duzeni != son_oturma_duzeni:
-            kisi_dagilimi = [0] * 8
+            kisi_matrisi = [[0]*4 for _ in range(8)]
             mevcut_kisi = 0
             son_oturma_duzeni = oturma_duzeni
         else:
-            mevcut_kisi = sum(kisi_dagilimi)
+            mevcut_kisi = sum(sum(row) for row in kisi_matrisi)
 
         while mevcut_kisi < gercek_kisi:
-            musait_kapilar = [i for i in range(8) if kisi_dagilimi[i] < 4]
-            if not musait_kapilar: break
-            if oturma_duzeni == "Ön Sıralar": secilen = musait_kapilar[0]
-            elif oturma_duzeni == "Arka Sıralar": secilen = musait_kapilar[-1]
-            else: secilen = random.choice(musait_kapilar)
-            kisi_dagilimi[secilen] += 1
+            bos_koltuklar = [(r, c) for r in range(8) for c in range(4) if kisi_matrisi[r][c] == 0]
+            if not bos_koltuklar: break
+            if oturma_duzeni == "Ön Sıralar": secilen = min(bos_koltuklar, key=lambda x: x[0])
+            elif oturma_duzeni == "Arka Sıralar": secilen = max(bos_koltuklar, key=lambda x: x[0])
+            else: secilen = random.choice(bos_koltuklar)
+            kisi_matrisi[secilen[0]][secilen[1]] = 1
             mevcut_kisi += 1
 
         while mevcut_kisi > gercek_kisi:
-            dolu_kapilar = [i for i in range(8) if kisi_dagilimi[i] > 0]
-            if not dolu_kapilar: break
-            if oturma_duzeni == "Ön Sıralar": secilen = dolu_kapilar[-1]
-            elif oturma_duzeni == "Arka Sıralar": secilen = dolu_kapilar[0]
-            else: secilen = random.choice(dolu_kapilar)
-            kisi_dagilimi[secilen] -= 1
+            dolu_koltuklar = [(r, c) for r in range(8) for c in range(4) if kisi_matrisi[r][c] == 1]
+            if not dolu_koltuklar: break
+            if oturma_duzeni == "Ön Sıralar": secilen = max(dolu_koltuklar, key=lambda x: x[0])
+            elif oturma_duzeni == "Arka Sıralar": secilen = min(dolu_koltuklar, key=lambda x: x[0])
+            else: secilen = random.choice(dolu_koltuklar)
+            kisi_matrisi[secilen[0]][secilen[1]] = 0
             mevcut_kisi -= 1
 
         move_gates = [0] * 8
         stat_gates = [0] * 8
-        for i in range(8):
-            if kisi_dagilimi[i] > 0:
-                kisi_sayisi = kisi_dagilimi[i]
-                mesafe_zayiflamasi = 1.0 - (i * 0.08) 
-                onumdeki_kisi_sayisi = sum(kisi_dagilimi[:i]) if i > 0 else 0
-                golgeleme = max(0.3, 1.0 - (onumdeki_kisi_sayisi * 0.04))
-                
-                baz_hareket = 15 + (kisi_sayisi * 12) + random.gauss(0, 3)
-                baz_statik = 25 + (kisi_sayisi * 18) + random.gauss(0, 4)
-                
-                move_gates[i] = max(0, min(100, int(baz_hareket * mesafe_zayiflamasi * golgeleme)))
-                stat_gates[i] = max(0, min(100, int(baz_statik * mesafe_zayiflamasi * golgeleme)))
+        for r in range(8):
+            hareket_toplam = 0
+            statik_toplam = 0
+            for c in range(4):
+                if kisi_matrisi[r][c] == 1:
+                    mesafe_zayiflamasi = 1.0 - (r * 0.08) 
+                    onumdeki_kisi = sum(kisi_matrisi[row][c] for row in range(r))
+                    golgeleme = max(0.3, 1.0 - (onumdeki_kisi * 0.15))
+                    
+                    kisi_hareket = 12 + random.gauss(0, 3)
+                    kisi_statik = 18 + random.gauss(0, 4)
+                    
+                    hareket_toplam += kisi_hareket * mesafe_zayiflamasi * golgeleme
+                    statik_toplam += kisi_statik * mesafe_zayiflamasi * golgeleme
+                    
+            move_gates[r] = max(0, min(100, int(hareket_toplam)))
+            stat_gates[r] = max(0, min(100, int(statik_toplam)))
 
         # SENSÖR GÜRÜLTÜLERİ
         okunan_sicaklik = sicaklik + random.gauss(0, 0.05)

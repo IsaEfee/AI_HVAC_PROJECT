@@ -199,6 +199,35 @@ if df is not None and not df.empty:
 
     st.divider()
 
+    # --- YENİ: DİNAMİK SINIF HARİTASI VE GÖLGELEME GÖRSELİ ---
+    st.subheader("🗺️ Canlı Sınıf Haritası (Oturma Düzeni ve Radar Gölgelenmesi)")
+    st.caption("Her kutucuk bir sırayı temsil eder. 🔴=Dolu, ⚪️=Boş. Kırmızı renk tonu ve içindeki sayı, o sıradan Radara giden net Enerjiyi gösterir. Arkalara geçtikçe veya önünüz doldukça enerjinin nasıl sönümlendiğini (Gölgelendiğini) görebilirsiniz.")
+    
+    try:
+        if os.path.exists("live_classroom.json"):
+            with open("live_classroom.json", "r") as f:
+                live_data = json.load(f)
+                kisi_matrisi = live_data["matrix"]
+                gorsel_enerjiler = live_data["energies"]
+                
+            html_str = "<div style='display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; margin: auto;'>"
+            for r in range(8):
+                for c in range(4):
+                    if kisi_matrisi[r][c] == 1:
+                        enerji = gorsel_enerjiler[r][c]
+                        # Enerjiye göre opaklık (Max enerji genelde 25-30 civarı olur)
+                        opacity = max(0.2, min(1.0, enerji / 25.0))
+                        bg_color = f"rgba(255, 75, 75, {opacity})"
+                        html_str += f"<div style='background-color: {bg_color}; padding: 15px; text-align: center; border-radius: 8px; font-weight: bold; color: white;'>👤 {enerji}</div>"
+                    else:
+                        html_str += f"<div style='background-color: #f0f2f6; padding: 15px; text-align: center; border-radius: 8px; color: #b0b4b8;'>🪑 0</div>"
+            html_str += "</div><br>"
+            st.markdown(html_str, unsafe_allow_html=True)
+    except Exception as e:
+        st.write("Sınıf haritası yükleniyor...")
+        
+    st.divider()
+
     # --- 2. ALT PANEL: GRAFİKLER ---
     col_grafik1, col_grafik2 = st.columns(2)
 
