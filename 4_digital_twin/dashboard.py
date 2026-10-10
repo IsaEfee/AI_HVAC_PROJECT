@@ -211,19 +211,18 @@ if df is not None and not df.empty:
                 kisi_matrisi = live_data["matrix"]
                 gorsel_enerjiler = live_data["energies"]
                 
-            html_str = "<div style='max-width: 500px; margin: auto;'>"
+            html_str = "<div style='max-width: 520px; margin: auto;'>"
             html_str += "<div style='background-color: #2e7d32; color: white; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 12px;'>📡 RADAR & TAHTA (ÖN TARAF) 🧑‍🏫</div>"
             html_str += "<div style='display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;'>"
             for r in range(8):
                 for c in range(4):
                     if kisi_matrisi[r][c] == 1:
                         enerji = gorsel_enerjiler[r][c]
-                        # Enerjiye göre opaklık (Max enerji genelde 25-30 civarı olur)
-                        opacity = max(0.2, min(1.0, enerji / 25.0))
-                        bg_color = f"rgba(255, 75, 75, {opacity})"
-                        html_str += f"<div style='background-color: {bg_color}; padding: 15px; text-align: center; border-radius: 8px; font-weight: bold; color: white;'>👤 {enerji}</div>"
+                        opacity = max(0.25, min(1.0, enerji / 25.0))
+                        bg_color = f"rgba(220, 53, 69, {opacity})"
+                        html_str += f"<div style='background-color: {bg_color}; padding: 10px; text-align: center; border-radius: 8px; color: white;'><div style='font-size: 16px;'>🧑‍🎓</div><div style='font-size: 11px; font-weight: bold; margin-top: 3px;'>📶 {enerji}</div></div>"
                     else:
-                        html_str += f"<div style='background-color: #f0f2f6; padding: 15px; text-align: center; border-radius: 8px; color: #b0b4b8;'>🪑 0</div>"
+                        html_str += f"<div style='background-color: #f8f9fa; border: 1px dashed #ced4da; padding: 10px; text-align: center; border-radius: 8px; color: #adb5bd;'><div style='font-size: 16px;'>🪑</div><div style='font-size: 11px; margin-top: 3px;'>Boş</div></div>"
             html_str += "</div>"
             html_str += "<div style='background-color: #555; color: white; text-align: center; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 12px;'>🚪 ARKA SIRA & KAPI (EN UZAK)</div>"
             html_str += "</div><br>"
@@ -233,34 +232,22 @@ if df is not None and not df.empty:
         
     st.divider()
 
-    # --- 2. ALT PANEL: GRAFİKLER ---
-    col_grafik1, col_grafik2 = st.columns(2)
+    # --- 2. ALT PANEL: GRAFİKLER (TEMİZLENMİŞ VE GELİŞTİRİLMİŞ TRENDLER) ---
+    st.subheader("📈 Gerçek Zamanlı Termodinamik & Otonom Klima Yanıtı")
+    st.caption("Son 60 saniyelik dinamik sistem tepkisi (Gereksiz radar çubuk grafiği kaldırılarak haritaya entegre edilmiştir)")
 
-    with col_grafik1:
-        st.subheader("Radar Enerji Dağılımı (Sıralara Göre)")
-        st.caption("AI ajanı sınıftaki kalabalığı bu profilden çıkarıyor")
-        
-        hareket = [anlik_durum[f"Move_G{i}"] for i in range(8)]
-        statik = [anlik_durum[f"Stat_G{i}"] for i in range(8)]
-        
-        radar_df = pd.DataFrame({
-            "Makro Hareket (Yürüme vs.)": hareket,
-            "Mikro Hareket (Nefes, Oturma)": statik
-        }, index=[f"Sıra {i}" for i in range(8)])
-        
-        st.bar_chart(radar_df, color=["#FF4B4B", "#0068C9"])
+    son_veriler = df.tail(60).copy()
+    ac_col = 'Aktif_Klima' if 'Aktif_Klima' in df.columns else 'Hedef_Klima_Gucu'
 
-    with col_grafik2:
-        st.subheader("Sıcaklık ve Klima Gücü Trendi")
-        st.caption("Son 1 dakikalık değişim (Sıcaklığa karşı Klima Yanıtı)")
-        
-        ac_col = 'Aktif_Klima' if 'Aktif_Klima' in df.columns else 'Hedef_Klima_Gucu'
-        
-        st.markdown("**Sıcaklık Trendi (°C)**")
-        st.line_chart(df.set_index('Zaman')['Sicaklik'], height=150)
-        
-        st.markdown("**Aktif Klima Modu (0-3)**")
-        st.line_chart(df.set_index('Zaman')[ac_col], height=150)
+    col_trend1, col_trend2 = st.columns(2)
+
+    with col_trend1:
+        st.markdown("**🌡️ Sıcaklık Eğrisi (°C)**")
+        st.line_chart(son_veriler.set_index('Zaman')[['Sicaklik']], height=250, color="#FF4B4B")
+
+    with col_trend2:
+        st.markdown("**❄️ Otonom Klima Gücü Modu (0: Kapalı, 1: Eko, 2: Normal, 3: Turbo)**")
+        st.line_chart(son_veriler.set_index('Zaman')[[ac_col]], height=250, color="#0068C9")
         
 else:
     st.warning("Veri bekleniyor veya dataset.csv bulunamadı. Simülatörü başlattığınıza emin olun.")
