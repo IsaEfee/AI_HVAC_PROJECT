@@ -118,9 +118,8 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
             if kisi_dagilimi[i] > 0:
                 kisi_sayisi = kisi_dagilimi[i]
                 mesafe_zayiflamasi = 1.0 - (i * 0.08) 
-                golgeleme = 1.0
-                if oturma_duzeni == "Karışık" and i > 2:
-                    golgeleme = 0.8
+                onumdeki_kisi_sayisi = sum(kisi_dagilimi[:i]) if i > 0 else 0
+                golgeleme = max(0.3, 1.0 - (onumdeki_kisi_sayisi * 0.04))
                 
                 baz_hareket = 15 + (kisi_sayisi * 12) + random.gauss(0, 3)
                 baz_statik = 25 + (kisi_sayisi * 18) + random.gauss(0, 4)

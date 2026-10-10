@@ -176,15 +176,16 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
                     # Uzaklığa Göre Enerji Sönümlemesi (Ters Kare Yasası Benzeri)
                     mesafe_zayiflamasi = 1.0 - (i * 0.08) # Arka sıralara doğru hafif düşüş
                     
-                    # Gölgeleme (Occlusion) Etkisi
-                    golgeleme = 1.0
-                    if oturma_duzeni == "Karışık" and i > 2:
-                        golgeleme = 0.8
+                    # DİNAMİK GÖLGELEME (Occlusion) Etkisi
+                    # Bu kapının 'önündeki' tüm kapılardaki toplam kişi sayısını bul
+                    onumdeki_kisi_sayisi = sum(kisi_dagilimi[:i]) if i > 0 else 0
+                    # Öndeki her 1 kişi, radar sinyalini %4 (0.04) keser (Maksimum %70 kesilebilir)
+                    golgeleme = max(0.3, 1.0 - (onumdeki_kisi_sayisi * 0.04))
                         
                     # Temel enerji o kapıdaki KİŞİ SAYISINA göre net bir şekilde artar
                     # LD2410C 1 kişi için ~20-30, çok kişi için ~60-100 değerleri üretir.
-                    baz_hareket = 15 + (kisi_per_kapi * 12) + random.gauss(0, 3)
-                    baz_statik = 25 + (kisi_per_kapi * 18) + random.gauss(0, 4)
+                    baz_hareket = 15 + (kisi_sayisi * 12) + random.gauss(0, 3)
+                    baz_statik = 25 + (kisi_sayisi * 18) + random.gauss(0, 4)
                     
                     move_gates[i] = max(0, min(100, int(baz_hareket * mesafe_zayiflamasi * golgeleme)))
                     stat_gates[i] = max(0, min(100, int(baz_statik * mesafe_zayiflamasi * golgeleme)))
