@@ -156,9 +156,9 @@ if df is not None and not df.empty:
             X_input = np.array([features])
             X_scaled = (X_input - s_min) * s_scale # Manuel MinMaxScaler Transform
             
-            # Modelden Çıktı Al
+            # Modelden Çıktı Al (Sigmoid ile 0-1 arası tahmin edilir, 32 ile çarpılır)
             kisi_pred, klima_pred = model.predict(X_scaled, verbose=0)
-            ai_tahmini_kisi = max(0, int(round(kisi_pred[0][0])))
+            ai_tahmini_kisi = max(0, int(round(kisi_pred[0][0] * 32.0)))
             # Arayüzdeki 'Klima Kararı' göstergesini de modelin çıktısıyla değiştirebiliriz
             # klima_gucu = np.argmax(klima_pred[0]) # İsteseniz klima gücünü de gerçek AI'dan alabilirsiniz.
     except Exception as e:
