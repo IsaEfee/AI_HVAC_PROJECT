@@ -31,15 +31,17 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
     kisi_matrisi = [[0]*4 for _ in range(8)]
     son_oturma_duzeni = ""
 
-    for dongu_sayaci in range(10000):
-        # 300 saniyede bir senaryo değişir
-        if dongu_sayaci % 300 == 0:
-            hedef_kisi = random.choice([0, 5, 12, 20, 30])
-            dis_sicaklik = random.uniform(15.0, 35.0)
-            cam_acik = random.choice([True, False, False])
+    print("Model eğitimi için GERÇEKÇİ 25.000 satırlık sürekli (kesintisiz) sentetik veri üretiliyor...")
+
+    for dongu_sayaci in range(25000):
+        # 180 saniyede bir senaryo değişir (Daha sık ve zengin durum geçişleri)
+        if dongu_sayaci % 180 == 0:
+            hedef_kisi = random.randint(0, 32)
+            dis_sicaklik = random.uniform(12.0, 36.0)
+            cam_acik = random.choice([True, False, False]) # %33 ihtimalle cam açık
             oturma_duzeni = random.choice(["Karışık", "Ön Sıralar", "Arka Sıralar"])
 
-        if dongu_sayaci % 3 == 0:
+        if dongu_sayaci % 2 == 0:
             if gercek_kisi < hedef_kisi: gercek_kisi += 1
             elif gercek_kisi > hedef_kisi: gercek_kisi -= 1
 
