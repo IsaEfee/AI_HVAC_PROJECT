@@ -28,6 +28,8 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
     yazici.writerow(header)
     zaman = datetime.now() - timedelta(hours=3)
     co2_gecmisi = [co2] * 10
+    kisi_dagilimi = [0] * 8
+    son_oturma_duzeni = ""
 
     for dongu_sayaci in range(10000):
         # 300 saniyede bir senaryo değişir
@@ -85,22 +87,43 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
         if cam_acik: nem += (45.0 - nem) * 0.01
         nem = max(30.0, min(70.0, nem))
 
+        if oturma_duzeni != son_oturma_duzeni:
+            kisi_dagilimi = [0] * 8
+            mevcut_kisi = 0
+            son_oturma_duzeni = oturma_duzeni
+        else:
+            mevcut_kisi = sum(kisi_dagilimi)
+
+        while mevcut_kisi < gercek_kisi:
+            musait_kapilar = [i for i in range(8) if kisi_dagilimi[i] < 4]
+            if not musait_kapilar: break
+            if oturma_duzeni == "Ön Sıralar": secilen = musait_kapilar[0]
+            elif oturma_duzeni == "Arka Sıralar": secilen = musait_kapilar[-1]
+            else: secilen = random.choice(musait_kapilar)
+            kisi_dagilimi[secilen] += 1
+            mevcut_kisi += 1
+
+        while mevcut_kisi > gercek_kisi:
+            dolu_kapilar = [i for i in range(8) if kisi_dagilimi[i] > 0]
+            if not dolu_kapilar: break
+            if oturma_duzeni == "Ön Sıralar": secilen = dolu_kapilar[-1]
+            elif oturma_duzeni == "Arka Sıralar": secilen = dolu_kapilar[0]
+            else: secilen = random.choice(dolu_kapilar)
+            kisi_dagilimi[secilen] -= 1
+            mevcut_kisi -= 1
+
         move_gates = [0] * 8
         stat_gates = [0] * 8
-        if gercek_kisi > 0:
-            dolu_kapi_sayisi = max(1, int((gercek_kisi / 30.0) * 8) + 1)
-            if oturma_duzeni == "Ön Sıralar": aktif_kapilar = list(range(0, min(8, dolu_kapi_sayisi)))
-            elif oturma_duzeni == "Arka Sıralar": aktif_kapilar = list(range(max(0, 8 - dolu_kapi_sayisi), 8))
-            else: aktif_kapilar = random.sample(range(8), min(8, dolu_kapi_sayisi))
-            kisi_per_kapi = gercek_kisi / len(aktif_kapilar)
-            for i in aktif_kapilar:
+        for i in range(8):
+            if kisi_dagilimi[i] > 0:
+                kisi_sayisi = kisi_dagilimi[i]
                 mesafe_zayiflamasi = 1.0 - (i * 0.08) 
                 golgeleme = 1.0
                 if oturma_duzeni == "Karışık" and i > 2:
                     golgeleme = 0.8
                 
-                baz_hareket = 15 + (kisi_per_kapi * 12) + random.gauss(0, 3)
-                baz_statik = 25 + (kisi_per_kapi * 18) + random.gauss(0, 4)
+                baz_hareket = 15 + (kisi_sayisi * 12) + random.gauss(0, 3)
+                baz_statik = 25 + (kisi_sayisi * 18) + random.gauss(0, 4)
                 
                 move_gates[i] = max(0, min(100, int(baz_hareket * mesafe_zayiflamasi * golgeleme)))
                 stat_gates[i] = max(0, min(100, int(baz_statik * mesafe_zayiflamasi * golgeleme)))

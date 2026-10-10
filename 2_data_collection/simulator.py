@@ -42,6 +42,10 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
 
     dongu_sayaci = 0
     co2_gecmisi = [co2] * 10
+    
+    # Oturma düzeni için durum (state) değişkenleri
+    kisi_dagilimi = [0] * 8
+    son_oturma_duzeni = ""
 
     while True:
         try:
@@ -130,24 +134,45 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
             if cam_acik: nem += (45.0 - nem) * 0.01
             nem = max(30.0, min(70.0, nem))
 
-            # --- 4. RADAR VERİSİ VE OTURMA DÜZENİ ---
+            # Oturma Düzeni Değiştiyse Sınıfı Yeniden Yerleştir
+            if oturma_duzeni != son_oturma_duzeni:
+                kisi_dagilimi = [0] * 8
+                mevcut_kisi = 0
+                son_oturma_duzeni = oturma_duzeni
+            else:
+                mevcut_kisi = sum(kisi_dagilimi)
+
+            # Sınıfa Biri Girdiğinde (Eklerken)
+            while mevcut_kisi < gercek_kisi:
+                musait_kapilar = [i for i in range(8) if kisi_dagilimi[i] < 4] # Max 4 kişi/kapı
+                if not musait_kapilar: break
+                
+                if oturma_duzeni == "Ön Sıralar": secilen = musait_kapilar[0]
+                elif oturma_duzeni == "Arka Sıralar": secilen = musait_kapilar[-1]
+                else: secilen = random.choice(musait_kapilar)
+                
+                kisi_dagilimi[secilen] += 1
+                mevcut_kisi += 1
+
+            # Sınıftan Biri Çıktığında (Silerken)
+            while mevcut_kisi > gercek_kisi:
+                dolu_kapilar = [i for i in range(8) if kisi_dagilimi[i] > 0]
+                if not dolu_kapilar: break
+                
+                if oturma_duzeni == "Ön Sıralar": secilen = dolu_kapilar[-1] # En arkadakini çıkar
+                elif oturma_duzeni == "Arka Sıralar": secilen = dolu_kapilar[0] # En öndekini çıkar
+                else: secilen = random.choice(dolu_kapilar)
+                    
+                kisi_dagilimi[secilen] -= 1
+                mevcut_kisi -= 1
+
+            # --- 4. RADAR VERİSİ (STATEFUL) ---
             move_gates = [0] * 8
             stat_gates = [0] * 8
-            if gercek_kisi > 0:
-                aktif_kapilar = []
-                # 30 kişi kapasiteli sınıf
-                dolu_kapi_sayisi = max(1, int((gercek_kisi / 30.0) * 8) + 1)
-                
-                if oturma_duzeni == "Ön Sıralar":
-                    aktif_kapilar = list(range(0, min(8, dolu_kapi_sayisi)))
-                elif oturma_duzeni == "Arka Sıralar":
-                    aktif_kapilar = list(range(max(0, 8 - dolu_kapi_sayisi), 8))
-                else: # Karışık
-                    aktif_kapilar = random.sample(range(8), min(8, dolu_kapi_sayisi))
-                    
-                kisi_per_kapi = gercek_kisi / len(aktif_kapilar)
-                    
-                for i in aktif_kapilar:
+            
+            for i in range(8):
+                if kisi_dagilimi[i] > 0:
+                    kisi_sayisi = kisi_dagilimi[i]
                     # Uzaklığa Göre Enerji Sönümlemesi (Ters Kare Yasası Benzeri)
                     mesafe_zayiflamasi = 1.0 - (i * 0.08) # Arka sıralara doğru hafif düşüş
                     
