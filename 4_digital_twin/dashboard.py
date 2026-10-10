@@ -154,7 +154,7 @@ if df is not None and not df.empty:
             features.extend([anlik_durum["CO2_Egimi"], anlik_durum["Sicaklik"], anlik_durum["Nem"]])
             
             X_input = np.array([features])
-            X_scaled = (X_input - s_min) * s_scale # Manuel MinMaxScaler Transform
+            X_scaled = X_input * s_scale + s_min # Doğru Scikit-Learn MinMaxScaler Formülü
             
             # Modelden Çıktı Al (Sigmoid ile 0-1 arası tahmin edilir, 32 ile çarpılır)
             kisi_pred, klima_pred = model.predict(X_scaled, verbose=0)
