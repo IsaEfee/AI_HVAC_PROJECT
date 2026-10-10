@@ -224,7 +224,7 @@ if df is not None and not df.empty:
             html_str += "</div><br>"
             st.markdown(html_str, unsafe_allow_html=True)
     except Exception as e:
-        st.write("Sınıf haritası yükleniyor...")
+        st.write(f"Sınıf haritası yüklenirken hata: {e}")
         
     st.divider()
 
