@@ -207,9 +207,11 @@ with open(DOSYA_ADI, mode='w', newline='') as dosya:
                 stat_gates[r] = max(0, min(100, int(statik_toplam)))
 
             # Arayüz İçin 2D Sınıf Haritasını Kaydet (Atomic Write)
-            with open("live_classroom_tmp.json", "w") as f:
+            live_path_tmp = os.path.join(os.path.dirname(__file__), '..', 'live_classroom_tmp.json')
+            live_path = os.path.join(os.path.dirname(__file__), '..', 'live_classroom.json')
+            with open(live_path_tmp, "w") as f:
                 json.dump({"matrix": kisi_matrisi, "energies": gorsel_enerjiler}, f)
-            os.replace("live_classroom_tmp.json", "live_classroom.json")
+            os.replace(live_path_tmp, live_path)
 
             # --- GERÇEKÇİ SENSÖR GÜRÜLTÜLERİ (Hardware Noise) ---
             okunan_sicaklik = sicaklik + random.gauss(0, 0.05)

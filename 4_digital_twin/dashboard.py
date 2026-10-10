@@ -204,8 +204,9 @@ if df is not None and not df.empty:
     st.caption("Her kutucuk bir sırayı temsil eder. 🔴=Dolu, ⚪️=Boş. Kırmızı renk tonu ve içindeki sayı, o sıradan Radara giden net Enerjiyi gösterir. Arkalara geçtikçe veya önünüz doldukça enerjinin nasıl sönümlendiğini (Gölgelendiğini) görebilirsiniz.")
     
     try:
-        if os.path.exists("live_classroom.json"):
-            with open("live_classroom.json", "r") as f:
+        live_path = os.path.join(os.path.dirname(__file__), '..', 'live_classroom.json')
+        if os.path.exists(live_path):
+            with open(live_path, "r") as f:
                 live_data = json.load(f)
                 kisi_matrisi = live_data["matrix"]
                 gorsel_enerjiler = live_data["energies"]
